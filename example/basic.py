@@ -71,6 +71,12 @@ class Pod1Handler(GenericApiHandler):
         items[id] = self.json_args
         self.finish_request(items[id])
 
+    @swagger.operation('list')
+    def get(self):
+        """
+           @rtype: L{Item}
+        """
+        self.finish_request(items)
 
 class PodHandler(GenericApiHandler):
     @swagger.operation(nickname='get')
@@ -101,10 +107,7 @@ class ProjectHandler(GenericApiHandler):
     @swagger.operation(nickname='create')
     def post(self, project, case=''):
         """
-
-        :param project:
-        :param case:
-        :return:
+        @return 200: case is created
         """
         print("ProjectHandler.post: %s -- %s -- %s" % (project, case, self.request.full_url()))
         fs = open("/home/swagger/tornado-rest-swagger/%s/%s" % (project, case), "wb")
