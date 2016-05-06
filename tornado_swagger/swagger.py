@@ -17,6 +17,7 @@ class DocParser(object):
         self.responseClass = None
         self.responseMessages = []
         self.params = {}
+        self.properties = {}
 
     @staticmethod
     def _sanitize_doc(comment):
@@ -51,6 +52,14 @@ class DocParser(object):
                 })
             elif field.tag() == 'rtype':
                 self.responseClass = body
+            elif tag == 'property':
+                self.properties.setdefault(arg, {}).update({
+                    'type': 'string'
+                })
+            elif field.tag() == 'ptype':
+                self.properties.setdefault(arg, {}).update({
+                    'type': body
+                })
             elif field.tag() == 'return' or field.tag() == 'raise':
                 self.responseMessages.append({
                     'code': arg,
@@ -69,7 +78,6 @@ class model(DocParser):
         self.id = cls.__name__
         self.args = args
         self.kwargs = kwargs
-        self.properties = {}
         self.required = []
 
         if '__init__' in dir(cls):

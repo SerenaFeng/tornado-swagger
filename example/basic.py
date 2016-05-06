@@ -12,6 +12,14 @@ HTTP_NOT_FOUND = 404
 swagger.docs()
 
 @swagger.model
+class Details:
+    """
+
+    """
+    def __init__(self, details=None):
+        self.details = details
+
+@swagger.model
 class Item:
     """
         @descriptin:
@@ -19,8 +27,10 @@ class Item:
             and the fields in the swagger spec are derived from the parameters to __init__.
         @notes:
             In this case we would have _id, name as required parameters and details as optional parameter.
+        @property details: Item decription
+        @ptype details: L{Details}
     """
-    def __init__(self, _id, name, details='123'):
+    def __init__(self, _id, name, details=None):
         self._id = _id
         self.name = name
         self.details = details
