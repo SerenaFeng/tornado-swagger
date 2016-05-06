@@ -1,9 +1,7 @@
 import json
 
 import tornado.ioloop
-import tornado.web
 from tornado.web import RequestHandler, HTTPError
-from tornado_swagger.handlers import swagger_handlers
 from tornado_swagger import swagger
 
 DEFAULT_REPRESENTATION = "application/json"
@@ -11,7 +9,7 @@ HTTP_BAD_REQUEST = 400
 HTTP_FORBIDDEN = 403
 HTTP_NOT_FOUND = 404
 
-swaggerHandlers = swagger_handlers("/swagger")
+swagger.docs()
 
 @swagger.model
 class Item:
@@ -114,14 +112,12 @@ class ProjectHandler(GenericApiHandler):
         fs.write(self.request.body)
         self.write("success")
 
-eventHandlers = [
+def make_app():
+    return swagger.Application([
         (r"/pods", Pod1Handler),
         (r"/pods/([^/]+)", PodHandler),
         (r"/projects/([^/]+)/cases/([^/]+)", ProjectHandler),
-    ]
-
-def make_app():
-    return tornado.web.Application(swaggerHandlers + eventHandlers)
+    ])
 
 if __name__ == "__main__":
     app = make_app()

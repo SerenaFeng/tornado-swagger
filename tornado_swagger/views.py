@@ -2,12 +2,10 @@
 # -*- coding: utf-8 -*-
 import urlparse
 import json
-
+import inspect
 import tornado.web
 import tornado.template
-
-from tornado_swagger.settings import SWAGGER_VERSION, URL_SWAGGER_API_LIST, URL_SWAGGER_API_SPEC
-from tornado_swagger import swagger
+from tornado_swagger.settings import SWAGGER_VERSION, URL_SWAGGER_API_LIST, URL_SWAGGER_API_SPEC, models
 
 __author__ = 'serena'
 
@@ -54,7 +52,7 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
 
     def get(self):
         self.set_header('content-type', 'application/json')
-        apis = swagger.find_api(self.application.handlers)
+        apis = find_api(self.application.handlers)
         if apis is None:
             raise tornado.web.HTTPError(404)
 
@@ -63,7 +61,7 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
             'swaggerVersion': SWAGGER_VERSION,
             'basePath': urlparse.urljoin(self.request.full_url(), self.base_url)[:-1],
             'apis': [self.__get_api_spec__(path, spec, operations) for path, spec, operations in apis],
-            'models': self.__get_models_spec(swagger.find_models())
+            'models': self.__get_models_spec(models)
         }
         self.finish(json_dumps(specs, self.get_arguments('pretty')))
 
@@ -98,3 +96,13 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
                 'responseMessages': api.responseMessages,
             } for api in operations]
         }
+
+def find_api(host_handlers):
+    for host, handlers in host_handlers:
+        for spec in handlers:
+            for (name, member) in inspect.getmembers(spec.handler_class):
+                if inspect.ismethod(member) and hasattr(member, 'rest_api'):
+                    spec_path = spec._path % tuple(['{%s}' % arg for arg in member.rest_api.func_args])
+                    operations = [member.rest_api for (name, member) in inspect.getmembers(spec.handler_class) if hasattr(member, 'rest_api')]
+                    yield spec_path, spec, operations
+                    break

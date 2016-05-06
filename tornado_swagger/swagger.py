@@ -4,10 +4,11 @@
 import inspect
 from functools import wraps
 import epydoc.markup
+import tornado.web
+from settings import default_settings, models
+from handlers import swagger_handlers
 
 __author__ = 'serena'
-
-models = []
 
 class DocParser(object):
     def __init__(self):
@@ -136,15 +137,9 @@ class operation(DocParser):
         return __wrapper__
 
 
-def find_api(host_handlers):
-    for host, handlers in host_handlers:
-        for spec in handlers:
-            for (name, member) in inspect.getmembers(spec.handler_class):
-                if inspect.ismethod(member) and hasattr(member, 'rest_api'):
-                    spec_path = spec._path % tuple(['{%s}' % arg for arg in member.rest_api.func_args])
-                    operations = [member.rest_api for (name, member) in inspect.getmembers(spec.handler_class) if hasattr(member, 'rest_api')]
-                    yield spec_path, spec, operations
-                    break
+def docs(**opts):
+    default_settings.update(opts)
 
-def find_models():
-    return models
+class Application(tornado.web.Application):
+    def __init__(self, handlers=None, default_host="", transforms=None, **settings):
+        super(Application, self).__init__(swagger_handlers() + handlers, default_host, transforms, **settings)
