@@ -47,11 +47,11 @@ class GenericApiHandler(RequestHandler):
     def initialize(self):
         """ Prepares the database for the entire class """
         pass
+
     def prepare(self):
         if not (self.request.method == "GET" or self.request.method == "DELETE"):
             if self.request.headers.get("Content-Type") is not None:
-                if self.request.headers["Content-Type"].startswith(
-                        DEFAULT_REPRESENTATION):
+                if self.request.headers["Content-Type"].startswith(DEFAULT_REPRESENTATION):
                     try:
                         self.json_args = json.loads(self.request.body)
                     except (ValueError, KeyError, TypeError) as error:
@@ -67,7 +67,7 @@ class GenericApiHandler(RequestHandler):
         self.finish()
 
 class Pod1Handler(GenericApiHandler):
-    @swagger.operation('create')
+    @swagger.operation(nickname='create')
     def post(self):
         """
             @param body: create test results for a pod.
@@ -79,7 +79,7 @@ class Pod1Handler(GenericApiHandler):
         items[id] = self.json_args
         self.finish_request(items[id])
 
-    @swagger.operation('list')
+    @swagger.operation(nickname='list')
     def get(self):
         """
            @rtype: L{Item}

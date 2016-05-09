@@ -19,10 +19,6 @@ class DocParser(object):
         self.params = {}
         self.properties = {}
 
-    @staticmethod
-    def _sanitize_doc(comment):
-        return comment.replace('\n', '<br/>') if comment else comment
-
     def parse_docstring(self, text):
         errors = []
 
@@ -34,43 +30,72 @@ class DocParser(object):
             tag = field.tag()
             arg = field.arg()
             body = field.body().to_plaintext(None).strip()
-            if tag == 'param':
-                self.params.setdefault(arg, {}).update({
-                    'name': arg,
-                    'description': body,
-                    'paramType': arg,
-                    'required': True,
-                    'allowMultiple': False
-                })
-
-                if 'paramType' not in self.params[arg]:
-                    self.params[arg]['paramType'] = 'query'
-            elif field.tag() == 'type':
-                self.params.setdefault(arg, {}).update({
-                    'name': arg,
-                    'dataType': body
-                })
-            elif field.tag() == 'rtype':
-                self.responseClass = body
-            elif tag == 'property':
-                self.properties.setdefault(arg, {}).update({
-                    'type': 'string'
-                })
-            elif field.tag() == 'ptype':
-                self.properties.setdefault(arg, {}).update({
-                    'type': body
-                })
-            elif field.tag() == 'return' or field.tag() == 'raise':
-                self.responseMessages.append({
-                    'code': arg,
-                    'message': body
-                })
-            elif field.tag() == 'notes':
-                self.notes = self._sanitize_doc(body)
-            elif field.tag() == 'description':
-                self.summary = self._sanitize_doc(body)
+            self._get_parser(tag)(arg, body)
         return doc
 
+    def _get_parser(self, tag):
+        parser = {
+            'param': self._parse_param,
+            'type': self._parse_type,
+            'rtype': self._parse_rtype,
+            'property': self._parse_property,
+            'ptype': self._parse_ptype,
+            'return': self._parse_return,
+            'raise': self._parse_return,
+            'notes': self._parse_notes,
+            'description': self._parse_description,
+        }
+        return parser.get(tag, self._not_supported)
+
+    def _parse_param(self, arg, body):
+        self.params.setdefault(arg, {}).update({
+            'name': arg,
+            'description': body,
+            'paramType': arg,
+            'required': True,
+            'allowMultiple': False
+        })
+
+        if 'paramType' not in self.params[arg]:
+            self.params[arg]['paramType'] = 'query'
+
+    def _parse_type(self, arg, body):
+        self.params.setdefault(arg, {}).update({
+            'name': arg,
+            'dataType': body
+        })
+
+    def _parse_rtype(self, arg, body):
+        self.responseClass = body
+
+    def _parse_property(self, arg, body):
+        self.properties.setdefault(arg, {}).update({
+            'type': 'string'
+        })
+
+    def _parse_ptype(self, arg, body):
+        self.properties.setdefault(arg, {}).update({
+            'type': body
+        })
+
+    def _parse_return(self, arg, body):
+        self.responseMessages.append({
+            'code': arg,
+            'message': body
+        })
+
+    def _parse_notes(self, arg, body):
+        self.notes = self._sanitize_doc(body)
+
+    def _parse_description(self, arg, body):
+        self.summary = self._sanitize_doc(body)
+
+    def _not_supported(self, arg, body):
+        pass
+
+    @staticmethod
+    def _sanitize_doc(comment):
+        return comment.replace('\n', '<br/>') if comment else comment
 
 class model(DocParser):
     def __init__(self, cls=None, *args, **kwargs):
