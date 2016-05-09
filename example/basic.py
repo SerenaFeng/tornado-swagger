@@ -83,6 +83,12 @@ class Pod1Handler(GenericApiHandler):
         """
         self.finish_request(items)
 
+    def options(self):
+        """
+        I'm not visible in the swagger docs
+        """
+        self.finish_request("I'm invisible in the swagger docs")
+
 class PodHandler(GenericApiHandler):
     @swagger.operation(nickname='get')
     def get(self, pod_id):
