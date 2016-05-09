@@ -20,10 +20,11 @@ class DocParser(object):
         self.properties = {}
 
     def parse_docstring(self, text):
+        if text is None:
+            return
+
         errors = []
-
         doc = epydoc.markup.parse(text, markup='epytext', errors=errors)
-
         _, fields = doc.split_fields(errors)
 
         for field in fields:

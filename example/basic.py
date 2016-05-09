@@ -13,9 +13,6 @@ swagger.docs()
 
 @swagger.model
 class Details:
-    """
-
-    """
     def __init__(self, details=None):
         self.details = details
 
