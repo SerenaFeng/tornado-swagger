@@ -9,8 +9,10 @@ from tornado_swagger.settings import SWAGGER_VERSION, URL_SWAGGER_API_LIST, URL_
 
 __author__ = 'serena'
 
+
 def json_dumps(obj, pretty=False):
     return json.dumps(obj, sort_keys=True, indent=4, separators=(',', ': ')) if pretty else json.dumps(obj)
+
 
 class SwaggerUIHandler(tornado.web.RequestHandler):
     def initialize(self, static_path, **kwds):
@@ -22,6 +24,7 @@ class SwaggerUIHandler(tornado.web.RequestHandler):
     def get(self):
         discovery_url = urlparse.urljoin(self.request.full_url(), self.reverse_url(URL_SWAGGER_API_LIST))
         self.render('index.html', discovery_url=discovery_url)
+
 
 class SwaggerResourcesHandler(tornado.web.RequestHandler):
     def initialize(self, api_version, exclude_namespaces, **kwds):
@@ -45,6 +48,7 @@ class SwaggerResourcesHandler(tornado.web.RequestHandler):
 
         self.finish(json_dumps(resources, self.get_arguments('pretty')))
 
+
 class SwaggerApiHandler(tornado.web.RequestHandler):
     def initialize(self, api_version, base_url, **kwds):
         self.api_version = api_version
@@ -52,7 +56,7 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
 
     def get(self):
         self.set_header('content-type', 'application/json')
-        apis = find_api(self.application.handlers)
+        apis = self.find_api(self.application.handlers)
         if apis is None:
             raise tornado.web.HTTPError(404)
 
@@ -97,12 +101,16 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
             } for api in operations]
         }
 
-def find_api(host_handlers):
-    for host, handlers in host_handlers:
-        for spec in handlers:
-            for (name, member) in inspect.getmembers(spec.handler_class):
-                if inspect.ismethod(member) and hasattr(member, 'rest_api'):
-                    spec_path = spec._path % tuple(['{%s}' % arg for arg in member.rest_api.func_args])
-                    operations = [member.rest_api for (name, member) in inspect.getmembers(spec.handler_class) if hasattr(member, 'rest_api')]
-                    yield spec_path, spec, operations
-                    break
+    @staticmethod
+    def find_api(host_handlers):
+        for host, handlers in host_handlers:
+            for spec in handlers:
+                for (name, member) in inspect.getmembers(spec.handler_class):
+                    if inspect.ismethod(member) and hasattr(member, 'rest_api'):
+                        spec_path = spec._path % tuple(['{%s}' % arg for arg in member.rest_api.func_args])
+                        operations = [member.rest_api for (name, member) in inspect.getmembers(spec.handler_class)
+                                      if hasattr(member, 'rest_api')]
+                        yield spec_path, spec, operations
+                        break
+
+

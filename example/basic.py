@@ -11,28 +11,31 @@ HTTP_NOT_FOUND = 404
 
 swagger.docs()
 
+
 @swagger.model
-class Details:
-    def __init__(self, details=None):
-        self.details = details
+class PropertySubclass:
+    def __init__(self, sub_property=None):
+        self.sub_property = sub_property
+
 
 @swagger.model
 class Item:
     """
-        @descriptin:
+        @description:
             This is an example of a model class that has parameters in its constructor
             and the fields in the swagger spec are derived from the parameters to __init__.
         @notes:
             In this case we would have _id, name as required parameters and details as optional parameter.
-        @property details: Item decription
-        @ptype details: L{Details}
+        @property property3: Item description
+        @ptype property3: L{PropertySubclass}
     """
-    def __init__(self, _id, name, details=None):
-        self._id = _id
-        self.name = name
-        self.details = details
+    def __init__(self, property1, property2=None, property3=None):
+        self.property1 = property1
+        self.property2 = property2
+        self.property3 = property3
 
 items = {}
+
 
 class GenericApiHandler(RequestHandler):
     """
@@ -63,7 +66,8 @@ class GenericApiHandler(RequestHandler):
         self.set_header("Content-Type", DEFAULT_REPRESENTATION)
         self.finish()
 
-class Pod1Handler(GenericApiHandler):
+
+class ItemNoParamHandler(GenericApiHandler):
     @swagger.operation(nickname='create')
     def post(self):
         """
@@ -72,9 +76,9 @@ class Pod1Handler(GenericApiHandler):
             @return 200: pod is created.
             @raise 400: invalid input
         """
-        id = self.json_args.get('_id')
-        items[id] = self.json_args
-        self.finish_request(items[id])
+        property1 = self.json_args.get('property1')
+        items[property1] = self.json_args
+        self.finish_request(items[property1])
 
     @swagger.operation(nickname='list')
     def get(self):
@@ -89,9 +93,10 @@ class Pod1Handler(GenericApiHandler):
         """
         self.finish_request("I'm invisible in the swagger docs")
 
-class PodHandler(GenericApiHandler):
+
+class ItemHandler(GenericApiHandler):
     @swagger.operation(nickname='get')
-    def get(self, pod_id):
+    def get(self, arg):
         """
             @rtype: L{Item}
             @description: get pod's test results
@@ -100,10 +105,10 @@ class PodHandler(GenericApiHandler):
 
                 This will be added to the Implementation Notes.It lets you put very long text in your api.
         """
-        self.finish_request(items[pod_id])
+        self.finish_request(items[arg])
 
     @swagger.operation(nickname='delete')
-    def delete(self, pod_id):
+    def delete(self, arg):
         """
             @description: delete pod by pod_id
             @notes:
@@ -111,26 +116,29 @@ class PodHandler(GenericApiHandler):
 
                 This will be added to the Implementation Notes.It lets you put very long text in your api.
         """
-        del items[pod_id]
+        del items[arg]
         self.finish_request("success")
 
-class ProjectHandler(GenericApiHandler):
+
+class ItemOptionParamHandler(GenericApiHandler):
     @swagger.operation(nickname='create')
-    def post(self, project, case=''):
+    def post(self, arg1, arg2=''):
         """
         @return 200: case is created
         """
-        print("ProjectHandler.post: %s -- %s -- %s" % (project, case, self.request.full_url()))
-        fs = open("/home/swagger/tornado-rest-swagger/%s/%s" % (project, case), "wb")
+        print("ProjectHandler.post: %s -- %s -- %s" % (arg1, arg2, self.request.full_url()))
+        fs = open("/home/swagger/tornado-rest-swagger/%s/%s" % (arg1, arg2), "wb")
         fs.write(self.request.body)
         self.write("success")
 
+
 def make_app():
     return swagger.Application([
-        (r"/pods", Pod1Handler),
-        (r"/pods/([^/]+)", PodHandler),
-        (r"/projects/([^/]+)/cases/([^/]+)", ProjectHandler),
+        (r"/pods", ItemNoParamHandler),
+        (r"/pods/([^/]+)", ItemHandler),
+        (r"/projects/([^/]+)/cases/([^/]+)", ItemOptionParamHandler),
     ])
+
 
 if __name__ == "__main__":
     app = make_app()

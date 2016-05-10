@@ -10,6 +10,7 @@ from handlers import swagger_handlers
 
 __author__ = 'serena'
 
+
 class DocParser(object):
     def __init__(self):
         self.notes = None
@@ -48,7 +49,9 @@ class DocParser(object):
         }
         return parser.get(tag, self._not_supported)
 
-    def _parse_param(self, arg, body):
+    def _parse_param(self, **kwargs):
+        arg = kwargs.get('arg', None)
+        body = kwargs.get('body', None)
         self.params.setdefault(arg, {}).update({
             'name': arg,
             'description': body,
@@ -60,43 +63,54 @@ class DocParser(object):
         if 'paramType' not in self.params[arg]:
             self.params[arg]['paramType'] = 'query'
 
-    def _parse_type(self, arg, body):
+    def _parse_type(self, **kwargs):
+        arg = kwargs.get('arg', None)
+        body = kwargs.get('body', None)
         self.params.setdefault(arg, {}).update({
             'name': arg,
             'dataType': body
         })
 
-    def _parse_rtype(self, arg, body):
+    def _parse_rtype(self, **kwargs):
+        body = kwargs.get('body', None)
         self.responseClass = body
 
-    def _parse_property(self, arg, body):
+    def _parse_property(self, **kwargs):
+        arg = kwargs.get('arg', None)
         self.properties.setdefault(arg, {}).update({
             'type': 'string'
         })
 
-    def _parse_ptype(self, arg, body):
+    def _parse_ptype(self, **kwargs):
+        arg = kwargs.get('arg', None)
+        body = kwargs.get('body', None)
         self.properties.setdefault(arg, {}).update({
             'type': body
         })
 
-    def _parse_return(self, arg, body):
+    def _parse_return(self, **kwargs):
+        arg = kwargs.get('arg', None)
+        body = kwargs.get('body', None)
         self.responseMessages.append({
             'code': arg,
             'message': body
         })
 
-    def _parse_notes(self, arg, body):
+    def _parse_notes(self, **kwargs):
+        body = kwargs.get('body', None)
         self.notes = self._sanitize_doc(body)
 
-    def _parse_description(self, arg, body):
+    def _parse_description(self, **kwargs):
+        body = kwargs.get('body', None)
         self.summary = self._sanitize_doc(body)
 
-    def _not_supported(self, arg, body):
+    def _not_supported(self, **kwargs):
         pass
 
     @staticmethod
     def _sanitize_doc(comment):
         return comment.replace('\n', '<br/>') if comment else comment
+
 
 class model(DocParser):
     def __init__(self, cls=None, *args, **kwargs):
@@ -121,6 +135,7 @@ class model(DocParser):
         self.parse_docstring(inspect.getdoc(cls))
         models.append(self)
 
+
 class operation(DocParser):
     def __init__(self, nickname=None, **kwds):
         super(operation, self).__init__()
@@ -131,6 +146,7 @@ class operation(DocParser):
 
     def __bind__(self, func):
         self.func = func
+
         self.__name__ = func.__name__
         argspec = inspect.getargspec(func)
         argspec.args.remove("self")
@@ -173,6 +189,7 @@ class operation(DocParser):
 
 def docs(**opts):
     default_settings.update(opts)
+
 
 class Application(tornado.web.Application):
     def __init__(self, handlers=None, default_host="", transforms=None, **settings):

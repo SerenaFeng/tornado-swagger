@@ -7,6 +7,7 @@ from tornado_swagger.views import *
 
 __author__ = 'serena'
 
+
 def swagger_handlers():
     prefix = default_settings.get('swagger_prefix', '/swagger')
     if prefix[-1] != '/':
