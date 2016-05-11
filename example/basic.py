@@ -28,11 +28,13 @@ class Item:
             In this case we would have property1, name as required parameters and property3 as optional parameter.
         @property property3: Item description
         @ptype property3: L{PropertySubclass}
+        @ptype property4: C{list} of L{PropertySubclass}
     """
-    def __init__(self, property1, property2=None, property3=None):
+    def __init__(self, property1, property2=None, property3=None, property4=None):
         self.property1 = property1
         self.property2 = property2
         self.property3 = property3
+        self.property4 = property4
 
 items = {}
 

@@ -82,11 +82,21 @@ class DocParser(object):
         })
 
     def _parse_ptype(self, **kwargs):
-        arg = kwargs.get('arg', None)
-        body = kwargs.get('body', None)
-        self.properties.setdefault(arg, {}).update({
-            'type': body
-        })
+        arg = kwargs.get('arg', '')
+        body = kwargs.get('body', '')
+        if body.__contains__(' of '):
+            code, linker = body.split(' of ')
+            if 'list' == code.strip():
+                self.properties.setdefault(arg, {}).update({
+                    'type': 'array',
+                    'items': {
+                        'type': linker.strip()
+                    }
+                })
+        else:
+            self.properties.setdefault(arg, {}).update({
+                'type': body
+           })
 
     def _parse_return(self, **kwargs):
         arg = kwargs.get('arg', None)
