@@ -134,9 +134,9 @@ class ItemOptionParamHandler(GenericApiHandler):
 
 def make_app():
     return swagger.Application([
-        (r"/pods", ItemNoParamHandler),
-        (r"/pods/([^/]+)", ItemHandler),
-        (r"/projects/([^/]+)/cases/([^/]+)", ItemOptionParamHandler),
+        (r"/items", ItemNoParamHandler),
+        (r"/items/([^/]+)", ItemHandler),
+        (r"/items/([^/]+)/cases/([^/]+)", ItemOptionParamHandler),
     ])
 
 

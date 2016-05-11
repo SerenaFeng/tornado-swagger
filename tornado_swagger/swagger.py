@@ -32,7 +32,7 @@ class DocParser(object):
             tag = field.tag()
             arg = field.arg()
             body = field.body().to_plaintext(None).strip()
-            self._get_parser(tag)(arg, body)
+            self._get_parser(tag)(arg=arg, body=body)
         return doc
 
     def _get_parser(self, tag):
