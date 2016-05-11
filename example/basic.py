@@ -25,7 +25,7 @@ class Item:
             This is an example of a model class that has parameters in its constructor
             and the fields in the swagger spec are derived from the parameters to __init__.
         @notes:
-            In this case we would have _id, name as required parameters and details as optional parameter.
+            In this case we would have property1, name as required parameters and property3 as optional parameter.
         @property property3: Item description
         @ptype property3: L{PropertySubclass}
     """

@@ -24,7 +24,7 @@ from tornado_swagger import swagger
 swagger.docs()
 
 # You may decorate your operation with @swagger.operation and use docs to inform information
-class Pod1Handler(GenericApiHandler):
+class ItemNoParamHandler(GenericApiHandler):
     @swagger.operation(nickname='create')
     def post(self):
         """
@@ -36,7 +36,7 @@ class Pod1Handler(GenericApiHandler):
 
 # Operations not decorated with @swagger.operation do not get added to the swagger docs
 
-class Pod1Handler(GenericApiHandler):
+class ItemNoParamHandler(GenericApiHandler):
     def options(self):
         """
         I'm not visible in the swagger docs
@@ -49,9 +49,9 @@ class Pod1Handler(GenericApiHandler):
 
 def make_app():
     return swagger.Application([
-        (r"/pods", Pod1Handler),
-        (r"/pods/([^/]+)", PodHandler),
-        (r"/projects/([^/]+)/cases/([^/]+)", ProjectHandler),
+        (r"/pods", ItemNoParamHandler),
+        (r"/pods/([^/]+)", ItemHandler),
+        (r"/projects/([^/]+)/cases/([^/]+)", ItemOptionParamHandler),
     ])
 
 # You define models like this:
@@ -62,13 +62,13 @@ class Item:
             This is an example of a model class that has parameters in its constructor
             and the fields in the swagger spec are derived from the parameters to __init__.
         @notes:
-            In this case we would have _id, name as required parameters and details as optional parameter.
-        @property details: Item decription
-        @ptype details: L{Details}
+            In this case we would have property1, property2 as required parameters and property3 as optional parameter.
+        @property property3: Item decription
+        @ptype property3: L{PropertySubclass}
     """
-    def __init__(self, _id, name=None):
-        self._id = _id
-        self.name = name
+    def __init__(self, property1, property2=None):
+        self.property1 = property1
+        self.property2 = property2
 
 # Swagger json:
     "models": {
@@ -76,13 +76,13 @@ class Item:
             "description": "A description...",
             "id": "Item",
             "required": [
-                "_id",
+                "property1",
             ],
             "properties": [
-                "_id": {
+                "property1": {
                     "type": "string"
                 },
-                "name": {
+                "property2": {
                     "type": "string"
                     "default": null
                 }
@@ -94,14 +94,14 @@ class Item:
 # then those args could be used to deduce the swagger model fields.
 # just as shown above
 
-# if you declare an @property in docs, this property name will also be used to deduce the swagger model fields
+# if you declare an @property in docs, this property property2 will also be used to deduce the swagger model fields
 class Item:
     """
-        @property details: Item description
+        @property property3: Item description
     """
-    def __init__(self, _id, name):
-        self._id = _id
-        self.name = name
+    def __init__(self, property1, property2):
+        self.property1 = property1
+        self.property2 = property2
 
 # Swagger json:
     "models": {
@@ -109,16 +109,16 @@ class Item:
             "description": "A description...",
             "id": "Item",
             "required": [
-                "_id",
+                "property1",
             ],
             "properties": [
-                "_id": {
+                "property1": {
                     "type": "string"
                 },
-                "name": {
+                "property2": {
                     "type": "string"
                 }
-                "details": {
+                "property3": {
                     "type": "string"
                 }
             ]
@@ -128,12 +128,12 @@ class Item:
 # if you declare an argument with @ptype, the type of this argument will be specified rather than the default 'string'
 class Item:
     """
-        @ptype details: L{Details}
+        @ptype property3: L{PropertySubclass}
     """
-    def __init__(self, _id, name, details=None):
-        self._id = _id
-        self.name = name
-        self.details = details
+    def __init__(self, property1, property2, property3=None):
+        self.property1 = property1
+        self.property2 = property2
+        self.property3 = property3
 
 # Swagger json:
     "models": {
@@ -141,17 +141,17 @@ class Item:
             "description": "A description...",
             "id": "Item",
             "required": [
-                "_id",
+                "property1",
             ],
             "properties": [
-                "_id": {
+                "property1": {
                     "type": "string"
                 },
-                "name": {
+                "property2": {
                     "type": "string"
                 },
-                "details": {
-                    "type": "Details"
+                "property3": {
+                    "type": "PropertySubclass"
                     "default": null
                 }
             ]
