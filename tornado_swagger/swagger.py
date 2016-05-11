@@ -97,11 +97,11 @@ class DocParser(object):
         })
 
     def _parse_notes(self, **kwargs):
-        body = kwargs.get('body', None)
+        body = kwargs.get('body', '')
         self.notes = self._sanitize_doc(body)
 
     def _parse_description(self, **kwargs):
-        body = kwargs.get('body', None)
+        body = kwargs.get('body', '')
         self.summary = self._sanitize_doc(body)
 
     def _not_supported(self, **kwargs):
@@ -114,26 +114,30 @@ class DocParser(object):
 
 class model(DocParser):
     def __init__(self, cls=None, *args, **kwargs):
-        super(model, self).__init__(**kwargs)
+        super(model, self).__init__()
         self.id = cls.__name__
         self.args = args
         self.kwargs = kwargs
         self.required = []
 
         if '__init__' in dir(cls):
-            argspec = inspect.getargspec(cls.__init__)
-            argspec.args.remove("self")
-            defaults = {}
-            if argspec.defaults:
-                defaults = list(zip(argspec.args[-len(argspec.defaults):], argspec.defaults))
-            required_args_count = len(argspec.args) - len(defaults)
-            for arg in argspec.args[:required_args_count]:
-                self.required.append(arg)
-                self.properties.setdefault(arg, {'type': 'string'})
-            for arg, default in defaults:
-                self.properties.setdefault(arg, {'type': 'string', "default": default})
+            self._parse_args(cls.__init__)
         self.parse_docstring(inspect.getdoc(cls))
         models.append(self)
+
+    def _parse_args(self, func):
+        argspec = inspect.getargspec(func)
+        argspec.args.remove("self")
+        defaults = {}
+        if argspec.defaults:
+            defaults = list(zip(argspec.args[-len(argspec.defaults):], argspec.defaults))
+        required_args_count = len(argspec.args) - len(defaults)
+        for arg in argspec.args[:required_args_count]:
+            self.required.append(arg)
+            self.properties.setdefault(arg, {'type': 'string'})
+        for arg, default in defaults:
+            self.properties.setdefault(arg, {'type': 'string', "default": default})
+
 
 
 class operation(DocParser):
@@ -144,10 +148,28 @@ class operation(DocParser):
         self.func_args = []
         self.kwds = kwds
 
-    def __bind__(self, func):
+    def __call__(self, *args, **kwds):
+        if self.func:
+            return self.func(*args, **kwds)
+
+        func = args[0]
+        self._parse_operation(func)
+
+        @wraps(func)
+        def __wrapper__(*in_args, **in_kwds):
+            return self.func(*in_args, **in_kwds)
+
+        __wrapper__.rest_api = self
+        return __wrapper__
+
+    def _parse_operation(self, func):
         self.func = func
 
         self.__name__ = func.__name__
+        self._parse_args(func)
+        self.parse_docstring(inspect.getdoc(self.func))
+
+    def _parse_args(self, func):
         argspec = inspect.getargspec(func)
         argspec.args.remove("self")
 
@@ -166,25 +188,7 @@ class operation(DocParser):
                 'paramType': 'path',
                 'dataType': 'string'
             })
-
-        self.parse_docstring(inspect.getdoc(self.func))
         self.func_args = argspec.args
-
-    def __call__(self, *args, **kwds):
-        if self.func:
-            return self.func(*args, **kwds)
-
-        func = args[0]
-
-        self.__bind__(func)
-
-        @wraps(func)
-        def __wrapper__(*args, **kwds):
-            return self.func(*args, **kwds)
-
-        __wrapper__.rest_api = self
-
-        return __wrapper__
 
 
 def docs(**opts):
