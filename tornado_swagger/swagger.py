@@ -4,11 +4,36 @@
 import inspect
 from functools import wraps
 import epydoc.markup
+from HTMLParser import HTMLParser
 import tornado.web
 from settings import default_settings, models
 from handlers import swagger_handlers
 
 __author__ = 'serena'
+
+
+class EpytextParser(HTMLParser):
+    a_text = False
+
+    def __init__(self, tag):
+        HTMLParser.__init__(self)
+        self.tag = tag
+        self.data = None
+
+    def handle_starttag(self, tag, attr):
+        if tag == self.tag:
+            self.a_text = True
+
+    def handle_endtag(self, tag):
+        if tag == self.tag:
+            self.a_text = False
+
+    def handle_data(self, data):
+        if self.a_text:
+            self.data = data
+
+    def get_data(self):
+        return self.data
 
 
 class DocParser(object):
@@ -31,7 +56,7 @@ class DocParser(object):
         for field in fields:
             tag = field.tag()
             arg = field.arg()
-            body = field.body().to_plaintext(None).strip()
+            body = field.body()
             self._get_parser(tag)(arg=arg, body=body)
         return doc
 
@@ -51,7 +76,7 @@ class DocParser(object):
 
     def _parse_param(self, **kwargs):
         arg = kwargs.get('arg', None)
-        body = kwargs.get('body', None)
+        body = self._get_body(**kwargs)
         self.params.setdefault(arg, {}).update({
             'name': arg,
             'description': body,
@@ -65,14 +90,14 @@ class DocParser(object):
 
     def _parse_type(self, **kwargs):
         arg = kwargs.get('arg', None)
-        body = kwargs.get('body', None)
+        body = self._get_body(**kwargs)
         self.params.setdefault(arg, {}).update({
             'name': arg,
             'dataType': body
         })
 
     def _parse_rtype(self, **kwargs):
-        body = kwargs.get('body', None)
+        body = self._get_body(**kwargs)
         self.responseClass = body
 
     def _parse_property(self, **kwargs):
@@ -82,36 +107,33 @@ class DocParser(object):
         })
 
     def _parse_ptype(self, **kwargs):
-        arg = kwargs.get('arg', '')
-        body = kwargs.get('body', '')
-        if body.__contains__(' of '):
-            code, linker = body.split(' of ')
-            if 'list' == code.strip():
-                self.properties.setdefault(arg, {}).update({
-                    'type': 'array',
-                    'items': {
-                        'type': linker.strip()
-                    }
-                })
-        else:
+        arg = kwargs.get('arg', None)
+        code = self._parse_epytext_para('code', **kwargs)
+        link = self._parse_epytext_para('link', **kwargs)
+        if code is None:
             self.properties.setdefault(arg, {}).update({
-                'type': body
+                'type': link
            })
+        elif code == 'list':
+            self.properties.setdefault(arg, {}).update({
+                'type': 'array',
+                'items': {'type': link}
+            })
 
     def _parse_return(self, **kwargs):
         arg = kwargs.get('arg', None)
-        body = kwargs.get('body', None)
+        body = self._get_body(**kwargs)
         self.responseMessages.append({
             'code': arg,
             'message': body
         })
 
     def _parse_notes(self, **kwargs):
-        body = kwargs.get('body', '')
+        body = self._get_body(**kwargs)
         self.notes = self._sanitize_doc(body)
 
     def _parse_description(self, **kwargs):
-        body = kwargs.get('body', '')
+        body = self._get_body(**kwargs)
         self.summary = self._sanitize_doc(body)
 
     def _not_supported(self, **kwargs):
@@ -120,6 +142,23 @@ class DocParser(object):
     @staticmethod
     def _sanitize_doc(comment):
         return comment.replace('\n', '<br/>') if comment else comment
+
+    @staticmethod
+    def _get_body(**kwargs):
+        body = kwargs.get('body', None)
+        return body.to_plaintext(None).strip() if body else body
+
+    @staticmethod
+    def _parse_epytext_para(tag, **kwargs):
+        def _parse_epytext(tag, body):
+            epytextParser = EpytextParser(tag)
+            epytextParser.feed(str(body))
+            data = epytextParser.get_data()
+            epytextParser.close()
+            return data
+
+        body = kwargs.get('body', None)
+        return _parse_epytext(tag, body) if body else body
 
 
 class model(DocParser):
