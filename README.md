@@ -51,7 +51,7 @@ def make_app():
     return swagger.Application([
         (r"/items", ItemNoParamHandler),
         (r"/items/([^/]+)", ItemHandler),
-        (r"/projects/([^/]+)/cases/([^/]+)", ItemOptionParamHandler),
+        (r"/items/([^/]+)/cases/([^/]+)", ItemOptionParamHandler),
     ])
 
 # You define models like this:
