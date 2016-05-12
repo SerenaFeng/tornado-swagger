@@ -73,9 +73,9 @@ class ItemNoParamHandler(GenericApiHandler):
     @swagger.operation(nickname='create')
     def post(self):
         """
-            @param body: create test results for a pod.
+            @param body: create test results for a item.
             @type body: L{Item}
-            @return 200: pod is created.
+            @return 200: item is created.
             @raise 400: invalid input
         """
         property1 = self.json_args.get('property1')
@@ -101,9 +101,9 @@ class ItemHandler(GenericApiHandler):
     def get(self, arg):
         """
             @rtype: L{Item}
-            @description: get pod's test results
+            @description: get item's test results
             @notes:
-                get a pod test results,
+                get a item test results,
 
                 This will be added to the Implementation Notes.It lets you put very long text in your api.
         """
@@ -112,9 +112,9 @@ class ItemHandler(GenericApiHandler):
     @swagger.operation(nickname='delete')
     def delete(self, arg):
         """
-            @description: delete pod by pod_id
+            @description: delete item by pod_id
             @notes:
-                delete test results of a pod
+                delete test results of a item
 
                 This will be added to the Implementation Notes.It lets you put very long text in your api.
         """

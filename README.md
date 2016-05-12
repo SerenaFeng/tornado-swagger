@@ -28,9 +28,9 @@ class ItemNoParamHandler(GenericApiHandler):
     @swagger.operation(nickname='create')
     def post(self):
         """
-            @param body: create test results for a pod.
+            @param body: create test results for a item.
             @type body: L{Item}
-            @return 200: pod is created.
+            @return 200: item is created.
             @raise 400: invalid input
         """
 
@@ -49,8 +49,8 @@ class ItemNoParamHandler(GenericApiHandler):
 
 def make_app():
     return swagger.Application([
-        (r"/pods", ItemNoParamHandler),
-        (r"/pods/([^/]+)", ItemHandler),
+        (r"/items", ItemNoParamHandler),
+        (r"/items/([^/]+)", ItemHandler),
         (r"/projects/([^/]+)/cases/([^/]+)", ItemOptionParamHandler),
     ])
 
