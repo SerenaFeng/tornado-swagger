@@ -64,6 +64,8 @@ class DocParser(object):
         parser = {
             'param': self._parse_param,
             'type': self._parse_type,
+            'in': self._parse_in,
+            'required': self._parse_required,
             'rtype': self._parse_rtype,
             'property': self._parse_property,
             'ptype': self._parse_ptype,
@@ -80,9 +82,6 @@ class DocParser(object):
         self.params.setdefault(arg, {}).update({
             'name': arg,
             'description': body,
-            'paramType': arg,
-            'required': True,
-            'allowMultiple': False
         })
 
         if 'paramType' not in self.params[arg]:
@@ -94,6 +93,22 @@ class DocParser(object):
         self.params.setdefault(arg, {}).update({
             'name': arg,
             'dataType': body
+        })
+
+    def _parse_in(self, **kwargs):
+        arg = kwargs.get('arg', None)
+        body = self._get_body(**kwargs)
+        self.params.setdefault(arg, {}).update({
+            'name': arg,
+            'paramType': body
+        })
+
+    def _parse_required(self, **kwargs):
+        arg = kwargs.get('arg', None)
+        body = self._get_body(**kwargs)
+        self.params.setdefault(arg, {}).update({
+            'name': arg,
+            'required': False if body in ['False', 'false'] else True
         })
 
     def _parse_rtype(self, **kwargs):
@@ -162,13 +177,25 @@ class DocParser(object):
 
 
 class model(DocParser):
-    def __init__(self, cls=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(model, self).__init__()
-        self.id = cls.__name__
         self.args = args
         self.kwargs = kwargs
         self.required = []
+        self.cls = None
 
+    def __call__(self, *args, **kwargs):
+        if self.cls:
+            return self.cls
+
+        cls = args[0]
+        self._parse_model(cls)
+
+        return cls
+
+    def _parse_model(self, cls):
+        self.id = cls.__name__
+        self.cls = cls
         if '__init__' in dir(cls):
             self._parse_args(cls.__init__)
         self.parse_docstring(inspect.getdoc(cls))
@@ -186,7 +213,6 @@ class model(DocParser):
             self.properties.setdefault(arg, {'type': 'string'})
         for arg, default in defaults:
             self.properties.setdefault(arg, {'type': 'string', "default": default})
-
 
 
 class operation(DocParser):

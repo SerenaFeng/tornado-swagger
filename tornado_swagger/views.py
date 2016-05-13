@@ -5,7 +5,7 @@ import json
 import inspect
 import tornado.web
 import tornado.template
-from tornado_swagger.settings import SWAGGER_VERSION, URL_SWAGGER_API_LIST, URL_SWAGGER_API_SPEC, models
+from settings import SWAGGER_VERSION, URL_SWAGGER_API_LIST, URL_SWAGGER_API_SPEC, models
 
 __author__ = 'serena'
 

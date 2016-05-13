@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 from tornado.web import URLSpec, StaticFileHandler
 
-from tornado_swagger.settings import *
-from tornado_swagger.views import *
+from settings import *
+from views import *
 
 __author__ = 'serena'
 

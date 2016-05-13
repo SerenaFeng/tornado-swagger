@@ -12,13 +12,13 @@ HTTP_NOT_FOUND = 404
 swagger.docs()
 
 
-@swagger.model
+@swagger.model()
 class PropertySubclass:
     def __init__(self, sub_property=None):
         self.sub_property = sub_property
 
 
-@swagger.model
+@swagger.model()
 class Item:
     """
         @description:
@@ -35,6 +35,33 @@ class Item:
         self.property2 = property2
         self.property3 = property3
         self.property4 = property4
+
+    def format_http(self):
+        return {
+            "property1": self.property1,
+            "property2": self.property2,
+            "property3": self.property3,
+            "property4": self.property4,
+        }
+
+    @staticmethod
+    def item_from_dict(item_dict):
+
+        if item_dict is None:
+            return None
+
+        t = Item(None)
+        t.property1 = item_dict.get('property1')
+        t.property2 = item_dict.get('property2')
+        t.property3 = item_dict.get('property3')
+        t.property4 = item_dict.get('property4')
+
+        return t
+
+    @classmethod
+    def test_classmethod(cls):
+        pass
+
 
 items = {}
 
@@ -75,19 +102,25 @@ class ItemNoParamHandler(GenericApiHandler):
         """
             @param body: create a item.
             @type body: L{Item}
+            @in body: body
             @return 200: item is created.
             @raise 400: invalid input
         """
         property1 = self.json_args.get('property1')
-        items[property1] = self.json_args
-        self.finish_request(items[property1])
+        item = Item.item_from_dict(self.json_args)
+        items[property1] = item
+        Item.test_classmethod()
+        self.finish_request(item.format_http())
 
     @swagger.operation(nickname='list')
     def get(self):
         """
            @rtype: L{Item}
         """
-        self.finish_request(items)
+        res = []
+        for key, value in items.iteritems():
+            res.append(value.format_http())
+        self.finish_request(res)
 
     def options(self):
         """
@@ -107,7 +140,7 @@ class ItemHandler(GenericApiHandler):
 
                 This will be added to the Implementation Notes.It lets you put very long text in your api.
         """
-        self.finish_request(items[arg])
+        self.finish_request(items[arg].format_http())
 
     @swagger.operation(nickname='delete')
     def delete(self, arg):
@@ -134,8 +167,42 @@ class ItemOptionParamHandler(GenericApiHandler):
         self.write("success")
 
 
+class ItemQueryHandler(GenericApiHandler):
+    @swagger.operation(nickname='query')
+    def get(self):
+        """
+           @param property1:
+           @type property1: L{string}
+           @in property1: query
+           @required property1: False
+
+           @param property2:
+           @type property2: L{string}
+           @in property2: query
+           @required property2: True
+           @rtype: L{Item}
+           @notes: GET /item?property1=1&property2=1
+        """
+        property1 = self.get_query_argument("property1", None)
+        property2 = self.get_query_argument("property2", None)
+
+        res = []
+        if property1 is None:
+            for key, value in items.iteritems():
+                if property2 is None:
+                    res.append(value.format_http())
+                elif value.property2 == property2:
+                    res.append(value.format_http())
+        elif items.has_key(property1):
+            if items.get(property1).property2 == property2:
+                res.append(items.get(property1).format_http())
+
+        self.finish_request(res)
+
+
 def make_app():
     return swagger.Application([
+        (r"/item", ItemQueryHandler),
         (r"/items", ItemNoParamHandler),
         (r"/items/([^/]+)", ItemHandler),
         (r"/items/([^/]+)/cases/([^/]+)", ItemOptionParamHandler),
