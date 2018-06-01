@@ -212,12 +212,12 @@ python basic.py
 And visit:
 
 ```
-curl http://localhost:711/swagger/spec
+curl http://localhost:7111/swagger/spec
 ```
 
 access to web
 ```
-http://localhost:711/swagger/spec.html
+http://localhost:7111/swagger/spec.html
 ```
 
 # Passing more metadata to swagger
