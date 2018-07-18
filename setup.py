@@ -25,7 +25,7 @@ setup(name='tornado-swagger',
       license='MIT',
       long_description=long_description,
       install_requires=[
-        'tornado>=3.1',
+        'tornado>=3.1,<=4.3',
         'epydoc>=0.3.1'
       ],
 )

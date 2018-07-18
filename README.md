@@ -9,7 +9,7 @@ In essense, you just need to wrap the Api instance and add a few python decorato
 Install:
 
 ```
-python setup.py install
+pip install .
 ```
 (This installs tornado and epydoc as well)
 
